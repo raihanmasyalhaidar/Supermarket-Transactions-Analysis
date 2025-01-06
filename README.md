@@ -70,10 +70,93 @@ This table records operator login sessions at the supermarket's Point-of-Sale (P
 
 ## Analysis
 Here are some analysis I used in this repository
-* Exploring the Data
 * Do more people make transactions by card or by cash?
-* Do people spend more per transaction when using cash or card?
-* Exploring Sunday Trading
+```SQL
+SELECT
+	AVG(CASE WHEN t_cash AND NOT t_card THEN amount END) AS cash_transactions,
+	AVG(CASE WHEN t_card AND NOT t_cash THEN amount END) AS card_transactions
+FROM pos_transactions;
+```
+![image](https://github.com/user-attachments/assets/22b1ab47-7ddb-4ffc-ab99-a9e6594e6942)
+
+From the results obtained, it is known that people tend to spend more money on shopping when using a card.
+
 * Analysis of daily trends
+```SQL
+SELECT
+	DATE_PART('week', end_date_time::DATE) AS week_num,
+	end_date_time::DATE AS end_date,
+	COUNT(DISTINCT(id)) AS total_transactions,
+	SUM(amount) AS total_sales,
+	ROUND(AVG(amount), 2) AS avg_sale_amount
+FROM pos_transactions
+WHERE EXTRACT(YEAR FROM (end_date_time)) >= '2019'
+GROUP BY end_date
+ORDER BY week_num, total_transactions;
+```
+![image](https://github.com/user-attachments/assets/ff3c79d0-8104-4653-b4e5-2a5e544aeb46)
+
+From the data, it is evident that weekends, especially Saturdays, recorded the highest transactions and sales, such as on April 6, 2019, with total sales of 430,575.40. Week 14 was the best-performing week with total sales of 1,690,989.87, while Week 9 had the lowest performance. The average sales per transaction tend to be higher on weekends compared to weekdays. Promotional strategies can be focused on weekends, while additional incentives can be applied on low-performing days to boost sales.
+
 * Should the supermarket open on sundays?
-* How much does labor cost?
+```SQL
+SELECT
+	DATE_PART('week', end_date_time::DATE) AS week_num,
+	SUM(amount)
+FROM pos_transactions
+WHERE EXTRACT(YEAR FROM end_date_time) >= '2019' AND 
+	DATE_PART('week', end_date_time::DATE) IN (8, 14)
+GROUP BY DATE_PART('week', end_date_time::DATE);
+```
+![image](https://github.com/user-attachments/assets/5c1f886b-4f03-467b-9cbd-2ed46e1aab8f)
+
+From the results shown in the table, Week 8 recorded total sales of 1,686,485.72, while Week 14 recorded total sales of 1,690,989.87. The difference between the two is very small, indicating that sales during both weeks were quite consistent and high. In general, considering the stable weekly sales performance, there is potential that opening the store on Sundays could further increase total sales. This is especially relevant if customers tend to shop more during weekends.
+
+* Operator Performance and Revenue Analysis
+```SQL
+SELECT
+	OperatorID,
+	COUNT(id) AS total_transactions,
+	SUM(amount) AS total_revenue,
+	ROUND(AVG(amount),2) AS avg_transaction_value
+FROM pos_transactions
+GROUP BY OperatorID
+ORDER BY total_revenue DESC
+LIMIT 5;
+```
+![image](https://github.com/user-attachments/assets/7b54faa6-eb45-4d54-91fa-66a69abee699)
+
+From the provided data, the operator with the highest revenue in a given month is Operator ID 119, with total revenue of 587,517.53. This operator recorded a total of 6,944 transactions, with an average transaction value of 84.61. The high revenue is attributed to the combination of a large transaction volume and a relatively high average transaction value compared to other operators.
+
+Although Operator ID 114 has the highest average transaction value of 90.02, their total revenue is lower because they handled fewer transactions, totaling 5,882. This indicates that the main factor contributing to the highest revenue is the high volume of transactions processed by Operator ID 119.
+
+* Peak Transaction Times
+```SQL
+SELECT
+	DATE_PART('hour', begin_date_time) AS transaction_hour,
+	COUNT(id) AS total_transactions
+FROM pos_transactions
+GROUP BY DATE_PART('hour', begin_date_time)
+ORDER BY total_transactions DESC
+LIMIT 5;
+```
+![image](https://github.com/user-attachments/assets/452b7dae-c7e7-469c-a200-bef9291b1c5c)
+
+Based on the data, it can be concluded that the peak transaction times occur at 11:00 AM with a total of 14,153 transactions, followed by 12:00 PM with 14,146 transactions. After that, the number of transactions gradually decreased at 1:00 PM (13,625 transactions), 2:00 PM (12,849 transactions), and 10:00 AM (12,842 transactions).
+
+Therefore, the peak transaction period occurs between 10:00 AM and 12:00 PM, with the highest peak at 11:00 AM, indicating that midday is the busiest time for transactions. Operational strategies, such as increasing staff or enhancing services, could be focused on these hours to improve efficiency and customer experience.
+
+* Basket Size and Revenue Correlation
+```SQL
+SELECT
+	basket_size,
+	AVG(amount) AS avg_transaction_value,
+	COUNT(id) AS total_transactions
+FROM pos_transactions
+GROUP BY basket_size
+ORDER BY avg_transaction_value DESC
+LIMIT 10;
+```
+![image](https://github.com/user-attachments/assets/29ff06a3-a6f4-475d-b002-ed9781c5bee7)
+
+Based on the results, there is generally a positive relationship between basket size and average transaction value. When the basket size is larger, the transaction value tends to be higher. For example, larger basket sizes like 240 and 236 have higher transaction values compared to smaller basket sizes. Although there are some variations, this pattern suggests that customers who buy more items usually spend more money. However, other factors such as the types of items or promotions can also influence the transaction value, so this relationship is not entirely consistent.
