@@ -64,6 +64,10 @@ This table records operator login sessions at the supermarket's Point-of-Sale (P
 
 ---
 
+## Technologies Used
+* Database : PostgreSQL, Microsoft Excel
+* Query Language : SQL
+
 ## Analysis
 Here are some analysis I used in this repository
 * Exploring the Data
