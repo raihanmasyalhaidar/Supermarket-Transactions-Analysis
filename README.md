@@ -130,6 +130,21 @@ From the provided data, the operator with the highest revenue in a given month i
 
 Although Operator ID 114 has the highest average transaction value of 90.02, their total revenue is lower because they handled fewer transactions, totaling 5,882. This indicates that the main factor contributing to the highest revenue is the high volume of transactions processed by Operator ID 119.
 
+* Workstation Utilization
+```SQL
+SELECT
+	Workstation_ID,
+	COUNT(id) AS usage_count
+FROM pos_operator_logs
+GROUP BY Workstation_ID
+ORDER BY usage_count DESC
+LIMIT 5;
+```
+
+![image](https://github.com/user-attachments/assets/3fa733d3-58dd-4609-a284-2cdf3bc286a1)
+
+Based on the analysis, Workstation 4 is the most frequently used workstation by operators for transactions, with a total of 1,764 logged transactions. Workstation 5 ranks second with 902 transactions, followed by Workstations 6, 7, and 8 with 864, 830, and 720 transactions, respectively. This indicates a significant disparity in workstation usage, with Workstation 4 being utilized far more frequently than the others. This information can be used to evaluate workload distribution and ensure operational efficiency, such as by optimizing the use of underutilized workstations or enhancing the capacity of heavily used ones.
+
 * Peak Transaction Times
 ```SQL
 SELECT
@@ -160,3 +175,17 @@ LIMIT 10;
 ![image](https://github.com/user-attachments/assets/29ff06a3-a6f4-475d-b002-ed9781c5bee7)
 
 Based on the results, there is generally a positive relationship between basket size and average transaction value. When the basket size is larger, the transaction value tends to be higher. For example, larger basket sizes like 240 and 236 have higher transaction values compared to smaller basket sizes. Although there are some variations, this pattern suggests that customers who buy more items usually spend more money. However, other factors such as the types of items or promotions can also influence the transaction value, so this relationship is not entirely consistent.
+
+* Longest Transaction
+```SQL
+SELECT
+	id,
+	ROUND(EXTRACT(EPOCH FROM end_date_time - begin_date_time)/60, 2) AS transaction_duration_minutes,
+	amount
+FROM pos_transactions
+ORDER BY transaction_duration_minutes DESC
+LIMIT 10;
+```
+![image](https://github.com/user-attachments/assets/699ce251-7c12-4aa2-84c3-99b5632685fc)
+
+The analysis reveals that the transaction with ID 98366 took the longest time to complete, with a duration of 18.95 minutes and an associated amount of 346.80. Following this, transactions with IDs 152416 and 62820 had durations of 16.57 and 16.38 minutes, respectively, with amounts of 291.96 and 399.21. The durations of the remaining transactions in the top 10 ranged from 12.68 minutes to 15.72 minutes, with varying transaction amounts. This information highlights that some transactions take considerably longer than others, which may be due to complex processes or other factors. Identifying the causes of these delays can help optimize transaction efficiency and improve overall system performance.
